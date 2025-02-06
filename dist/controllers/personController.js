@@ -24,7 +24,7 @@ export const createPerson = async (req, res) => {
         const defaultPassword = `${fname.toLowerCase()}_${library_name}`;
         const salt = bcrypt.genSaltSync(10);
         const hashedPassword = bcrypt.hashSync(defaultPassword, salt);
-        const [personResult] = await sequelize.query("INSERT INTO person (fname, lname, phone, address, roles) VALUES (?, ?, ?, ?, ?) ", { replacements: [fname, lname, phone, address, roles] });
+        const [personResult] = await sequelize.query("INSERT INTO person (fname, lname, phone, address, roles,person_email) VALUES (?, ?, ?, ?, ?,?) ", { replacements: [fname, lname, phone, address, roles, email] });
         if (!personResult || personResult.length === 0) {
             return res.status(500).json({ error: "Error creating person" });
         }

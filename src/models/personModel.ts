@@ -1,5 +1,6 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../db/index.js';
+import Authorisation from './authorisationModel.js';
 
 const Person = sequelize.define('Person', {
   person_id: {
@@ -28,6 +29,11 @@ const Person = sequelize.define('Person', {
     type: DataTypes.ENUM('admin', 'librarian', 'reader'),
     allowNull: false,
     defaultValue: 'reader',
+  },
+  person_email: {
+    type: DataTypes.STRING(255),
+    unique: true,
+    defaultValue: 'N/A',
   },
 }, {
   tableName: 'person',

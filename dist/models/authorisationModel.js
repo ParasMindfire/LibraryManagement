@@ -1,10 +1,11 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../db/index.js';
+import Person from './personModel.js';
 const Authorisation = sequelize.define('Authorisation', {
-    auth_id: {
+    id: {
         type: DataTypes.INTEGER,
-        autoIncrement: true,
         primaryKey: true,
+        autoIncrement: true,
     },
     isOwner: {
         type: DataTypes.BOOLEAN,
@@ -12,8 +13,12 @@ const Authorisation = sequelize.define('Authorisation', {
     },
     person_email: {
         type: DataTypes.STRING(255),
-        // unique: true,
         defaultValue: 'N/A',
+        references: {
+            model: Person,
+            key: 'person_email',
+        },
+        onDelete: 'CASCADE',
     },
     person_pass_hash: {
         type: DataTypes.STRING(255),

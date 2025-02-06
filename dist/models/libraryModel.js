@@ -13,7 +13,7 @@ const LibraryTable = sequelize.define('LibraryTable', {
     owner_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        unique: true,
+        // unique: true,
     },
 }, {
     tableName: 'library_table',

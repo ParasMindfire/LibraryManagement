@@ -1,40 +1,34 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../db/index.js';
-const Person = sequelize.define('Person', {
-    person_id: {
+const Books = sequelize.define('Books', {
+    book_id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
         primaryKey: true,
     },
-    fname: {
+    title: {
         type: DataTypes.STRING(255),
         allowNull: false,
     },
-    lname: {
+    author: {
         type: DataTypes.STRING(255),
         allowNull: false,
     },
-    phone: {
-        type: DataTypes.STRING(255),
-        unique: true,
-        allowNull: false,
-    },
-    address: {
+    genre: {
         type: DataTypes.STRING(255),
         allowNull: false,
     },
-    roles: {
-        type: DataTypes.ENUM('admin', 'librarian', 'reader'),
-        allowNull: false,
-        defaultValue: 'reader',
-    },
-    person_email: {
+    isbn: {
         type: DataTypes.STRING(255),
         unique: true,
-        defaultValue: 'N/A',
+        allowNull: false,
+    },
+    total_copies: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
     },
 }, {
-    tableName: 'person',
+    tableName: 'books',
     timestamps: false
 });
-export default Person;
+export default Books;

@@ -6,7 +6,6 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-
 export const getPerson = async (req: Request, res: Response):Promise<any> => {
     try {
       const getAllPerson = await sequelize.query("SELECT * FROM person");
@@ -32,8 +31,8 @@ export const createPerson = async (req: Request, res: Response):Promise<any> => 
         const hashedPassword = bcrypt.hashSync(defaultPassword, salt);
 
         const [personResult]:any[] = await sequelize.query(
-            "INSERT INTO person (fname, lname, phone, address, roles) VALUES (?, ?, ?, ?, ?) ", 
-            { replacements: [fname, lname, phone, address, roles] }
+            "INSERT INTO person (fname, lname, phone, address, roles,person_email) VALUES (?, ?, ?, ?, ?,?) ", 
+            { replacements: [fname, lname, phone, address, roles,email] }
         );
 
         if (!personResult || personResult.length === 0) {
@@ -54,7 +53,6 @@ export const createPerson = async (req: Request, res: Response):Promise<any> => 
     }
 
 };
-
 
 
 export const loginPerson = async (req: Request, res: Response):Promise<any> => {
@@ -92,8 +90,6 @@ export const loginPerson = async (req: Request, res: Response):Promise<any> => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
-
-
 
 export const updatePassword = async (req: Request, res: Response):Promise<any> => {
     try {

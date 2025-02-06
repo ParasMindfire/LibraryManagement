@@ -11,7 +11,7 @@ export const authorisation = async (req:Request, res :Response, next:NextFunctio
       res.status(201).json({message:"Token Not Found in header"});
     }
   
-    const token = authHeader!.split(' ')[2];
+    const token = authHeader!.split(' ')[1];
 
     console.log("tokennn ",token);
   

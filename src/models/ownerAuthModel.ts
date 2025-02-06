@@ -11,7 +11,7 @@ const OwnerAuth = sequelize.define('OwnerAuth', {
   owner_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    unique: true,
+    // unique: true,
     references: {
       model: LibraryTable,
       key: 'owner_id',
@@ -25,7 +25,7 @@ const OwnerAuth = sequelize.define('OwnerAuth', {
   owner_email: {
     type: DataTypes.STRING(255),
     allowNull: false,
-    unique: true,
+    // unique: true,
   },
 }, {
   tableName: 'owner_auth',

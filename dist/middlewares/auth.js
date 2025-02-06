@@ -7,7 +7,7 @@ export const authorisation = async (req, res, next) => {
     if (!authHeader || !authHeader.startsWith('Bearer')) {
         res.status(201).json({ message: "Token Not Found in header" });
     }
-    const token = authHeader.split(' ')[2];
+    const token = authHeader.split(' ')[1];
     console.log("tokennn ", token);
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
