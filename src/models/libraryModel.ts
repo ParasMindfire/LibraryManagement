@@ -21,6 +21,7 @@ const LibraryTable = sequelize.define('LibraryTable', {
   timestamps: false
 });
 
+
 export default LibraryTable;
 
 

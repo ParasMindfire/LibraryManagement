@@ -3,7 +3,6 @@ import { Sequelize } from 'sequelize';
 
 dotenv.config();
 
-
 const sequelize = new Sequelize(
   process.env.MYSQL_DATABASE || 'my_library',
   process.env.MYSQL_USER || 'root',
