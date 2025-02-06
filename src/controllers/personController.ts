@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import express,{ Request, Response } from 'express';
 import sequelize from '../db/index.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -6,24 +6,33 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-export const createPerson = async (req: Request, res: Response) => {
-    try {
-        const { fname, lname, phone, address, roles, owner_email, library_id } = req.body;
 
-        if (!fname || !lname || !phone || !address || !roles || !owner_email || !library_id) {
+export const getPerson = async (req: Request, res: Response):Promise<any> => {
+    try {
+      const getAllPerson = await sequelize.query("SELECT * FROM person");
+    //   console.log("getAllPersonController ",getAllPerson[0]);
+      return res.json(getAllPerson[0]);
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: "Internal Server Error" });
+    }
+};
+
+export const createPerson = async (req: Request, res: Response):Promise<any> => {
+    try {
+        const {fname,lname,phone,address,roles,email,library_name}=req.body;
+
+        if (!fname || !lname || !phone || !address || !roles || !email || !library_name) {
             return res.status(400).json({ message: 'All fields are required' });
         }
 
-        // Construct email and default password
-        const person_email = owner_email; // Owner assigns the email
-        const defaultPassword = `${fname.toLowerCase()}_${library_id}`;
+        const person_email = email; 
+        const defaultPassword = `${fname.toLowerCase()}_${library_name}`;
         const salt = bcrypt.genSaltSync(10);
         const hashedPassword = bcrypt.hashSync(defaultPassword, salt);
 
-
-        // Insert into person table
         const [personResult]:any[] = await sequelize.query(
-            "INSERT INTO person (fname, lname, phone, address, roles) VALUES (?, ?, ?, ?, ?) RETURNING person_id", 
+            "INSERT INTO person (fname, lname, phone, address, roles) VALUES (?, ?, ?, ?, ?) ", 
             { replacements: [fname, lname, phone, address, roles] }
         );
 
@@ -31,22 +40,24 @@ export const createPerson = async (req: Request, res: Response) => {
           return res.status(500).json({ error: "Error creating person" });
         }
 
-        const personId = personResult[0].person_id;
+        // const personId = personResult[0].person_id;
 
-        // Insert into authorisation table
         await sequelize.query(
             "INSERT INTO authorisation (person_email, person_pass_hash) VALUES (?, ?)",
             { replacements: [person_email, hashedPassword] }
         );
 
-        res.status(201).json({ message: 'Person created successfully', person_id: personId, email: person_email, defaultPassword });
+        res.status(201).json({ message: 'Person created successfully', personResult:personResult});
     } catch (error) {
         console.error(error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        return res.status(500).json({ error: 'Internal Server Error' });
     }
+
 };
 
-export const loginPerson = async (req: Request, res: Response) => {
+
+
+export const loginPerson = async (req: Request, res: Response):Promise<any> => {
     try {
         const { email, password } = req.body;
 
@@ -54,11 +65,11 @@ export const loginPerson = async (req: Request, res: Response) => {
             return res.status(400).json({ message: 'Email and password are required' });
         }
 
-        // Fetch user from authorisation table
         const [user]:any[]= await sequelize.query(
             "SELECT * FROM authorisation WHERE person_email = ?",
             { replacements: [email] }
         );
+        
 
         if (!user || user.length === 0) {
             return res.status(404).json({ message: 'User not found' });
@@ -75,22 +86,26 @@ export const loginPerson = async (req: Request, res: Response) => {
             { expiresIn: '3h' }
         );
 
-        res.status(200).json({ message: 'Login successful', token });
+        res.status(200).json({ message: 'Login successful', token:token });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
 
-export const updatePassword = async (req: Request, res: Response) => {
+
+
+export const updatePassword = async (req: Request, res: Response):Promise<any> => {
     try {
-        const { email, oldPassword, newPassword } = req.body;
+        
+        const {email}=req.body.auth;
+
+        const { oldPassword, newPassword } = req.body;
 
         if (!email || !oldPassword || !newPassword) {
             return res.status(400).json({ message: 'All fields are required' });
         }
 
-        // Fetch user from authorisation table
         const [user]:any[]= await sequelize.query(
             "SELECT * FROM authorisation WHERE person_email = ?",
             { replacements: [email] }
@@ -108,7 +123,6 @@ export const updatePassword = async (req: Request, res: Response) => {
         const salt = bcrypt.genSaltSync(10);
         const hashedNewPassword = bcrypt.hashSync(newPassword, salt);
 
-        // Update password in authorisation table
         await sequelize.query(
             "UPDATE authorisation SET person_pass_hash = ? WHERE person_email = ?",
             { replacements: [hashedNewPassword, email] }
@@ -122,27 +136,7 @@ export const updatePassword = async (req: Request, res: Response) => {
 };
 
 
-export const getPerson = async (req: Request, res: Response) => {
-    try {
-      const getAllPerson = await sequelize.query("SELECT * FROM person");
-    //   console.log("getAllPersonController ",getAllPerson[0]);
-      res.json(getAllPerson[0]);
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: "Internal Server Error" });
-    }
-};
 
 
-// export const updatePerson = async (req: Request, res: Response) => {
-//     try {
-//       const updatePerson = await sequelize.query("SELECT * FROM person");
-//     //   console.log("getAllPersonController ",getAllPerson[0]);
-//       res.json(getAllPerson[0]);
-//     } catch (error) {
-//       console.error(error);
-//       res.status(500).json({ error: "Internal Server Error" });
-//     }
-// };
 
 

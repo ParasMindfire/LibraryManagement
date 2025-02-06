@@ -13,12 +13,12 @@ const Authorisation = sequelize.define('Authorisation', {
   },
   person_email: {
     type: DataTypes.STRING(255),
-    unique: true,
+    // unique: true,
     defaultValue: 'N/A',
   },
   person_pass_hash: {
     type: DataTypes.STRING(255),
-    unique: true,
+    // unique: true,
     defaultValue: 'N/A',
   },
 }, {

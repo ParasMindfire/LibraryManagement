@@ -1,4 +1,5 @@
 import express from 'express';
+import {Express} from 'express';
 import dotenv from 'dotenv';
 import allRoutes from './routes/allRoutes.js';
 import sequelize from './db/index.js';
@@ -7,7 +8,7 @@ import syncTables from './models/syncModels.js';
 
 dotenv.config();
 
-const app = express();
+const app:Express= express();
 const port = process.env.PORT || 3000;
 
 

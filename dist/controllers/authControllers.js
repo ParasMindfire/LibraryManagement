@@ -8,7 +8,7 @@ export const verifyAuthorisation = async (req, res) => {
         });
         console.log("type ", typeof (toVerifyPerson[0][0]));
         const person = toVerifyPerson[0][0];
-        // if(person && person.person_pass_hash==)
+        // if(person?.person_pass_hash==)
         console.log("verifiedPen ", person);
         res.json({ message: "ok" });
         // const postUser = await sequelize.query("insert into person (fname,lname,phone,address,roles) values (?,?,?,?,?) returning",{
