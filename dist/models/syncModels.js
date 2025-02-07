@@ -3,6 +3,8 @@ import OwnerAuth from "./ownerAuthModel.js";
 import Authorisation from "./authorisationModel.js";
 import Person from "./personModel.js";
 import Books from "./booksModel.js";
+import Borrowing from "./borrowingModel.js";
+import Fine from "./fineModel.js";
 const syncTables = async () => {
     await LibraryTable.sync({ alter: true });
     console.log('LibraryTable synced successfully.');
@@ -14,5 +16,9 @@ const syncTables = async () => {
     console.log('Authorisation Table synced successfully.');
     await Books.sync({ alter: true });
     console.log('Books Table synced successfully. OK ?');
+    await Borrowing.sync({ alter: true });
+    console.log('Borrowing Table synced successfully.');
+    await Fine.sync({ alter: true });
+    console.log('Fine Table synced successfully.');
 };
 export default syncTables;

@@ -18,7 +18,7 @@ const Person = sequelize.define('Person', {
   },
   phone: {
     type: DataTypes.STRING(255),
-    unique: true,
+    // unique: true,
     allowNull: false,
   },
   address: {
@@ -32,7 +32,7 @@ const Person = sequelize.define('Person', {
   },
   person_email: {
     type: DataTypes.STRING(255),
-    unique: true,
+    // unique: true,
     defaultValue: 'N/A',
   },
 }, {

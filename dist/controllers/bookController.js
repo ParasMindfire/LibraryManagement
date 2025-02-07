@@ -25,8 +25,8 @@ export const updateBooks = async (req, res) => {
         const { email } = req.body.auth;
         const [validPerson] = await sequelize.query("select roles from person where person_email=?", { replacements: [email] });
         console.log("valid person ", validPerson);
-        if (!validPerson || validPerson.length === 0) {
-            return res.status(500).json({ error: "Error creating validPerson" });
+        if (!validPerson || validPerson.length === 0 || validPerson[0].roles != "librarian") {
+            return res.status(500).json({ error: "Not Allowed To Update Books" });
         }
         const { copies, isbn } = req.body;
         if (!copies) {
@@ -37,6 +37,40 @@ export const updateBooks = async (req, res) => {
             return res.status(500).json({ error: "Error updating books" });
         }
         res.status(201).json({ message: 'Books updated successfully', updatedBook: updatedBook });
+    }
+    catch (error) {
+        console.error(error);
+        return res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+export const singleBook = async (req, res) => {
+    try {
+        const id = req.params.id;
+        const [singleBook] = await sequelize.query("Select * from books where book_id=?", { replacements: [id] });
+        if (!singleBook || singleBook.length === 0) {
+            return res.status(500).json({ error: "Error Getting book of give id" });
+        }
+        return res.status(201).json({ message: "Book Got Succesfully", singleBook: singleBook });
+    }
+    catch (error) {
+        console.error(error);
+        return res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+export const deleteBooks = async (req, res) => {
+    try {
+        const { email } = req.body.auth;
+        const [validPerson] = await sequelize.query("select roles from person where person_email=?", { replacements: [email] });
+        if (!validPerson || validPerson.length === 0 || validPerson[0].roles != "librarian") {
+            return res.status(500).json({ error: "Not Allowed To Delete Books" });
+        }
+        const id = req.params.id;
+        console.log("book id ", id);
+        const [deletedBooks] = await sequelize.query("DELETE from books where book_id=?", { replacements: [id] });
+        if (!deletedBooks || deletedBooks.length === 0) {
+            return res.status(500).json({ error: "Error Deleting book" });
+        }
+        return res.status(201).json({ message: "Book Deleted Succesfully", deletedBooks: deletedBooks });
     }
     catch (error) {
         console.error(error);
