@@ -5,8 +5,38 @@ import { createBooks, getAllBooks, updateBooks, deleteBooks, singleBook } from '
 import { assignBooks, getAllBorrowings, checkDefaulters, getAllfines, updateFines } from '../controllers/borrowingController.js';
 import { authorisation } from '../middlewares/auth.js';
 const router = express.Router();
-router.get('/libraries', [], getLibraries);
+/**
+ * @swagger
+ * /libraries:
+ *   get:
+ *     summary: Get all libraries
+ *     description: Retrieve a list of all libraries in the system.
+ *     responses:
+ *       200:
+ *         description: A list of libraries.
+ */
+router.get('/libraries', getLibraries);
+/**
+ * @swagger
+ * /owners:
+ *   get:
+ *     summary: Get all owners
+ *     description: Retrieve a list of all library owners.
+ *     responses:
+ *       200:
+ *         description: A list of owners
+ */
 router.get('/owners', [], getAllOwners);
+/**
+ * @swagger
+ * /persons:
+ *   get:
+ *     summary: Get all persons
+ *     description: Retrieve a list of all persons in the system.
+ *     responses:
+ *       200:
+ *         description: A list of persons.
+ */
 router.get('/persons', [], getPerson);
 router.post('/users', [], createPerson);
 router.post('/login', [], loginPerson);

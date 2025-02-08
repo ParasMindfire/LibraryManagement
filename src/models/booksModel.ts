@@ -21,7 +21,7 @@ const Books = sequelize.define('Books', {
   },
   isbn: {
     type: DataTypes.STRING(255),
-    unique:true,
+    // unique:true,
     allowNull: false,
   },
   total_copies: {

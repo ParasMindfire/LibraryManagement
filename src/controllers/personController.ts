@@ -1,8 +1,11 @@
-import express,{ Request, Response } from 'express';
+import express,{ NextFunction, Request, Response } from 'express';
 import sequelize from '../db/index.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import { CustomError } from '../errors/customError.js';
+import { StatusCodes } from 'http-status-codes';
+import { BadRequestError } from '../errors/badRequest.js';
 
 dotenv.config();
 
@@ -17,42 +20,38 @@ export const getPerson = async (req: Request, res: Response):Promise<any> => {
     }
 };
 
-export const createPerson = async (req: Request, res: Response):Promise<any> => {
+export const createPerson = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-        const {fname,lname,phone,address,roles,email,library_name}=req.body;
-
-        if (!fname || !lname || !phone || !address || !roles || !email || !library_name) {
-            return res.status(400).json({ message: 'All fields are required' });
-        }
-
-        const person_email = email; 
-        const defaultPassword = `${fname.toLowerCase()}_${library_name}`;
-        const salt = bcrypt.genSaltSync(10);
-        const hashedPassword = bcrypt.hashSync(defaultPassword, salt);
-
-        const [personResult]:any[] = await sequelize.query(
-            "INSERT INTO person (fname, lname, phone, address, roles,person_email) VALUES (?, ?, ?, ?, ?,?) ", 
-            { replacements: [fname, lname, phone, address, roles,email] }
-        );
-
-        if (!personResult || personResult.length === 0) {
-          return res.status(500).json({ error: "Error creating person" });
-        }
-
-        // const personId = personResult[0].person_id;
-
-        await sequelize.query(
-            "INSERT INTO authorisation (person_email, person_pass_hash) VALUES (?, ?)",
-            { replacements: [person_email, hashedPassword] }
-        );
-
-        res.status(201).json({ message: 'Person created successfully', personResult:personResult});
+      const { fname, lname, phone, address, roles, email, library_name } = req.body;
+  
+      if (!fname || !lname || !phone || !address || !roles || !email || !library_name) {
+        throw new BadRequestError('All fields are required');
+      }
+  
+      const person_email = email; 
+      const defaultPassword = `${fname.toLowerCase()}_${library_name}`;
+      const salt = bcrypt.genSaltSync(10);
+      const hashedPassword = bcrypt.hashSync(defaultPassword, salt);
+  
+      const [personResult]: any[] = await sequelize.query(
+        "INSERT INTO person (fname, lname, phone, address, roles, person_email) VALUES (?, ?, ?, ?, ?, ?) ", 
+        { replacements: [fname, lname, phone, address, roles, email] }
+      );
+  
+      if (!personResult || personResult.length === 0) {
+        throw new CustomError('Error creating person', StatusCodes.INTERNAL_SERVER_ERROR);
+      }
+  
+      await sequelize.query(
+        "INSERT INTO authorisation (person_email, person_pass_hash) VALUES (?, ?)",
+        { replacements: [person_email, hashedPassword] }
+      );
+  
+      res.status(StatusCodes.CREATED).json({ message: 'Person created successfully', personResult });
     } catch (error) {
-        console.error(error);
-        return res.status(500).json({ error: 'Internal Server Error' });
+      next(error);
     }
-
-};
+  };
 
 
 export const loginPerson = async (req: Request, res: Response):Promise<any> => {

@@ -1,10 +1,13 @@
 import express from 'express';
 import {Express} from 'express';
 import dotenv from 'dotenv';
-import allRoutes from './routes/allRoutes.js';
+import router from './routes/index.js';
 import sequelize from './db/index.js';
 import syncTables from './models/syncModels.js';
-// import LibraryTable from './models/libraryModel.js';
+import swaggerDocs from './helpers/swaggerConfig.js';
+import { errorHandler } from './middlewares/errorHandler.js';
+import notFound from './middlewares/notFound.js';
+
 
 dotenv.config();
 
@@ -14,7 +17,15 @@ const port = process.env.PORT || 3000;
 
 app.use(express.json());
 
-app.use('/', allRoutes);
+app.use('/', router);
+
+app.use(notFound);
+app.use(errorHandler as express.ErrorRequestHandler);
+
+
+swaggerDocs(app);
+
+
 
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
