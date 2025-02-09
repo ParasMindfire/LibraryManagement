@@ -17,13 +17,15 @@ const port = process.env.PORT || 3000;
 
 app.use(express.json());
 
+swaggerDocs(app);
+
 app.use('/', router);
 
 app.use(notFound);
 app.use(errorHandler as express.ErrorRequestHandler);
 
 
-swaggerDocs(app);
+
 
 
 

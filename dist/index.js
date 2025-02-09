@@ -10,10 +10,10 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 3000;
 app.use(express.json());
+swaggerDocs(app);
 app.use('/', router);
 app.use(notFound);
 app.use(errorHandler);
-swaggerDocs(app);
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
 });

@@ -1,88 +1,130 @@
 import sequelize from '../db/index.js';
-export const getAllBorrowings = async (req, res) => {
-    const [borrowings] = await sequelize.query("SELECT * from borrowing");
-    return res.status(200).json({ borrowings: borrowings });
-};
-export const getAllfines = async (req, res) => {
+import { BadRequestError } from '../errors/badRequest.js';
+import { NotFoundError } from '../errors/notFound.js';
+import { InternalServerError } from '../errors/internalServerError.js';
+import { ForbiddenError } from '../errors/forbiddenError.js';
+export const getAllBorrowings = async (req, res, next) => {
     try {
-        const [getAllFines] = await sequelize.query("select * from fine");
-        return res.status(200).json({ getAllBooks: getAllFines });
+        const { email } = req.body.auth;
+        if (!email) {
+            throw new BadRequestError("Authentication email is required");
+        }
+        const [validPerson] = await sequelize.query("SELECT roles FROM person WHERE person_email = ?", { replacements: [email] });
+        if (!validPerson || validPerson.length === 0 || (validPerson[0].roles !== "librarian" && validPerson[0].roles !== "owner" && validPerson[0].roles !== "admin")) {
+            throw new ForbiddenError("Not allowed to See Borrowings");
+        }
+        const [borrowings] = await sequelize.query("SELECT * FROM borrowing");
+        if (!borrowings || borrowings.length === 0) {
+            throw new NotFoundError('No borrowings found');
+        }
+        res.status(200).json({ borrowings });
     }
     catch (error) {
-        console.error(error);
-        return res.status(500).json({ error: 'Internal Server Error' });
+        next(error);
     }
 };
-export const assignBooks = async (req, res) => {
+export const getAllFines = async (req, res, next) => {
     try {
+        const { email } = req.body.auth;
+        if (!email) {
+            throw new BadRequestError("Authentication email is required");
+        }
+        const [validPerson] = await sequelize.query("SELECT roles FROM person WHERE person_email = ?", { replacements: [email] });
+        if (!validPerson || validPerson.length === 0 || (validPerson[0].roles !== "librarian" && validPerson[0].roles !== "owner" && validPerson[0].roles !== "admin")) {
+            throw new ForbiddenError("Not allowed to See Fines");
+        }
+        const [fines] = await sequelize.query("SELECT * FROM fine");
+        if (!fines || fines.length === 0) {
+            throw new NotFoundError('No fines found');
+        }
+        res.status(200).json({ fines });
+    }
+    catch (error) {
+        next(error);
+    }
+};
+export const assignBooks = async (req, res, next) => {
+    try {
+        const { email } = req.body.auth;
+        if (!email) {
+            throw new BadRequestError("Authentication email is required");
+        }
+        const [validPerson] = await sequelize.query("SELECT roles FROM person WHERE person_email = ?", { replacements: [email] });
+        if (!validPerson || validPerson.length === 0 || (validPerson[0].roles !== "librarian")) {
+            throw new ForbiddenError("Not allowed to Assign books");
+        }
         const { librarian_id, reader_id, book_id } = req.body;
         if (!librarian_id || !reader_id || !book_id) {
-            return res.status(400).json({ message: 'All Borrowing fields are required' });
+            throw new BadRequestError('All borrowing fields are required');
         }
-        const [assignResult] = await sequelize.query("INSERT INTO borrowing (librarian_id, reader_id, book_id, borrow_date, due_date) VALUES (?, ?, ?, CURDATE(), ADDDATE(CURDATE(),interval 14 day)) ", { replacements: [librarian_id, reader_id, book_id] });
-        if (!assignResult || assignResult.length === 0) {
-            return res.status(500).json({ error: "Error creating books" });
+        const [assignResult] = await sequelize.query("INSERT INTO borrowing (librarian_id, reader_id, book_id, borrow_date, due_date) VALUES (?, ?, ?, CURDATE(), ADDDATE(CURDATE(),INTERVAL 14 DAY))", { replacements: [librarian_id, reader_id, book_id] });
+        if (!assignResult) {
+            throw new InternalServerError('Error assigning books');
         }
-        res.status(201).json({ message: 'Borrowings entered successfully', assignResult: assignResult });
+        res.status(201).json({ message: 'Book assigned successfully' });
     }
     catch (error) {
-        console.error(error);
-        return res.status(500).json({ error: 'Internal Server Error' });
+        next(error);
     }
 };
-export const checkDefaulters = async (req, res) => {
+export const checkDefaulters = async (req, res, next) => {
     try {
+        const { email } = req.body.auth;
+        if (!email) {
+            throw new BadRequestError("Authentication email is required");
+        }
+        const [validPerson] = await sequelize.query("SELECT roles FROM person WHERE person_email = ?", { replacements: [email] });
+        if (!validPerson || validPerson.length === 0 || (validPerson[0].roles !== "librarian" && validPerson[0].roles !== "owner" && validPerson[0].roles !== "admin")) {
+            throw new ForbiddenError("Not allowed to See Defaulters");
+        }
         const [defaulters] = await sequelize.query("SELECT * FROM borrowing WHERE CURDATE() > due_date AND fine_id = -1");
-        console.log("defaulters ", defaulters);
         if (!defaulters || defaulters.length === 0) {
-            return res.status(404).json({ message: "No defaulters detected." });
+            throw new NotFoundError('No defaulters detected');
         }
         for (const defaulter of defaulters) {
             const borrowing_id = defaulter.borrowing_id;
             const reader_id = defaulter.reader_id;
             const fine_amount = 100;
-            console.log(reader_id + " " + fine_amount + " " + "pending");
-            const [result] = await sequelize.query("INSERT INTO fine (reader_id, amount, status) VALUES (?, ?, ?)", {
-                replacements: [reader_id, fine_amount, 'pending'],
-            });
-            console.log("result ", result);
-            const fine_id = result;
-            console.log("fine id ", result.fine_id);
-            await sequelize.query("UPDATE borrowing SET fine_id = ? WHERE borrowing_id = ?", {
-                replacements: [fine_id, borrowing_id],
-            });
+            const [result] = await sequelize.query("INSERT INTO fine (reader_id, amount, status) VALUES (?, ?, ?)", { replacements: [reader_id, fine_amount, 'pending'] });
+            if (!result) {
+                throw new InternalServerError('Error inserting fine');
+            }
+            const fine_id = result.fine_id;
+            await sequelize.query("UPDATE borrowing SET fine_id = ? WHERE borrowing_id = ?", { replacements: [fine_id, borrowing_id] });
         }
         res.status(200).json({ message: 'Defaulters processed successfully' });
     }
     catch (error) {
-        console.error(error);
-        return res.status(500).json({ error: 'Internal Server Error' });
+        next(error);
     }
 };
-export const updateFines = async (req, res) => {
+export const updateFines = async (req, res, next) => {
     try {
+        const { email } = req.body.auth;
+        if (!email) {
+            throw new BadRequestError("Authentication email is required");
+        }
+        const [validPerson] = await sequelize.query("SELECT roles FROM person WHERE person_email = ?", { replacements: [email] });
+        if (!validPerson || validPerson.length === 0 || (validPerson[0].roles !== "librarian" && validPerson[0].roles !== "owner" && validPerson[0].roles !== "admin")) {
+            throw new ForbiddenError("Not allowed to update Fines");
+        }
         const [defaultersWithFine] = await sequelize.query("SELECT * FROM borrowing WHERE fine_id != -1");
         if (!defaultersWithFine || defaultersWithFine.length === 0) {
-            return res.status(404).json({ message: "No defaulters with pending fines." });
+            throw new NotFoundError('No defaulters with pending fines');
         }
         for (const defaulter of defaultersWithFine) {
             const borrowing_id = defaulter.borrowing_id;
             const fine_id = defaulter.fine_id;
-            const [fineRecord] = await sequelize.query("SELECT amount FROM fine WHERE fine_id = ? AND status = 'pending'", {
-                replacements: [fine_id],
-            });
+            const [fineRecord] = await sequelize.query("SELECT amount FROM fine WHERE fine_id = ? AND status = 'pending'", { replacements: [fine_id] });
             if (fineRecord && fineRecord.length > 0) {
                 const currentFine = fineRecord[0].amount;
                 const newFineAmount = currentFine + 100;
-                await sequelize.query("UPDATE fine SET amount = ? WHERE fine_id = ?", {
-                    replacements: [newFineAmount, fine_id],
-                });
+                await sequelize.query("UPDATE fine SET amount = ? WHERE fine_id = ?", { replacements: [newFineAmount, fine_id] });
             }
         }
         res.status(200).json({ message: 'Fines updated successfully' });
     }
     catch (error) {
-        console.error(error);
-        return res.status(500).json({ error: 'Internal Server Error' });
+        next(error);
     }
 };

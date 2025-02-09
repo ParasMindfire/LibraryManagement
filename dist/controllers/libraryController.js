@@ -1,43 +1,27 @@
 import sequelize from '../db/index.js';
-export const getLibraries = async (req, res) => {
+import { NotFoundError } from '../errors/notFound.js';
+import { StatusCodes } from 'http-status-codes';
+export const getLibraries = async (req, res, next) => {
     try {
-        const getAllLibraries = await sequelize.query("SELECT * FROM library_table");
-        // console.log("getNotesController ",getAllLibraries[0]);
-        res.json(getAllLibraries[0]);
+        const [libraries] = await sequelize.query("SELECT * FROM library_table");
+        if (!libraries || libraries.length === 0) {
+            throw new NotFoundError("No libraries found");
+        }
+        res.status(StatusCodes.OK).json(libraries);
     }
     catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Internal Server Error" });
+        next(error);
     }
 };
-export const getAllOwners = async (req, res) => {
+export const getAllOwners = async (req, res, next) => {
     try {
-        const getAllOwners = await sequelize.query("select * from owner_auth");
-        // console.log("getNotesController ",getAllOwners[0]);
-        res.json(getAllOwners[0]);
+        const [owners] = await sequelize.query("SELECT * FROM owner_auth");
+        if (!owners || owners.length === 0) {
+            throw new NotFoundError("No owners found");
+        }
+        res.status(StatusCodes.OK).json(owners);
     }
     catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Internal Server Error" });
+        next(error);
     }
 };
-// export const addNotes=async(req:Request,res:Response)=>{
-//     try{
-//         const comingTitle=req.body.title;
-//         const comingContents=req.body.contents;
-//         const query = "INSERT INTO notes (title, contents) VALUES (?, ?)";
-//         const values=[comingTitle,comingContents];
-//         // const result = await pool.query(query, values);
-//         const currNote:notes={
-//             title:comingTitle,
-//             contents:comingContents
-//         }
-//         Notes.push(currNote);
-//         // console.log("curr Notes",currNote);
-//         res.status(201).json(Notes);
-//     }catch(error){
-//         console.error(error);
-//         res.status(500).json({ error: "Internal Server Error" });
-//     }
-// }
-// export const updateNotes=async(req:)

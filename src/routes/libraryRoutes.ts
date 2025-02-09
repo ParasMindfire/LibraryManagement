@@ -25,24 +25,19 @@ const libraryRoutes = Router();
  *   get:
  *     summary: Get all libraries
  *     tags: [Libraries]
- *     security:
- *       - Authorization: []
- *     parameters:
- *       - in: query
- *         name: library_ID
- *         schema:
- *           type: integer
- *         description: Filter libraries by ID.
- *       - in: query
- *         name: owner_id
- *         schema:
- *           type: integer
- *         description: Filter libraries by owner ID.
- *     responses:
- *       200:
- *         description: List of libraries.
- *       500:
- *         description: Internal server error.
+*     responses:
+ *      200:
+ *         description: Ok, The field Was Added 
+ *      201:
+ *         description: Book borrowed successfully.
+ *      400:
+ *         description: Bad request, missing required fields.
+ *      401:
+ *         description:Unauthorized Error
+ *      403:
+ *         description: Forbidden Error
+ *      404:
+ *         description: Not Found Error
  */
 libraryRoutes.get('/libraries', libraryController.getLibraries);
 
@@ -52,13 +47,19 @@ libraryRoutes.get('/libraries', libraryController.getLibraries);
  *   get:
  *     summary: Get all owners
  *     tags: [Libraries]
- *     security:
- *       - Authorization: []
- *     responses:
- *       200:
- *         description: List of owners.
- *       500:
- *         description: Internal server error.
+*     responses:
+ *      200:
+ *         description: Ok, The field Was Added 
+ *      201:
+ *         description: Book borrowed successfully.
+ *      400:
+ *         description: Bad request, missing required fields.
+ *      401:
+ *         description:Unauthorized Error
+ *      403:
+ *         description: Forbidden Error
+ *      404:
+ *         description: Not Found Error
  */
 libraryRoutes.get('/owners', libraryController.getAllOwners);
 

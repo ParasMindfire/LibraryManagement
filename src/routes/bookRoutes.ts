@@ -19,7 +19,7 @@ const bookRoutes = Router();
  *     tags: [Book Routes]
  *     description: Add a new book to the library.
  *     security:
- *       - Authorization: []
+ *       - authorization: []
  *     requestBody:
  *       required: true
  *       content:
@@ -44,19 +44,25 @@ const bookRoutes = Router();
  *                 default: "Fiction"
  *               ISBN:
  *                 type: string
- *                 default: "123-4567891234"
+ *                 default: "1234567891234"
  *               total_copies:
  *                 type: integer
- *                 default: 10
- *     responses:
- *       201:
- *         description: Book added successfully
- *       400:
- *         description: Missing required fields
- *       500:
- *         description: Internal server error
+ *                 default: 0
+*     responses:
+ *      200:
+ *         description: Ok, The field Was Added 
+ *      201:
+ *         description: Book borrowed successfully.
+ *      400:
+ *         description: Bad request, missing required fields.
+ *      401:
+ *         description:Unauthorized Error
+ *      403:
+ *         description: Forbidden Error
+ *      404:
+ *         description: Not Found Error
  */
-bookRoutes.post('/books', bookController.createBooks);
+bookRoutes.post('/books', authorisation, bookController.createBooks);
 
 
 
@@ -66,37 +72,68 @@ bookRoutes.post('/books', bookController.createBooks);
  *   get:
  *     summary: Get all books
  *     tags: [Book Routes]
- *     security:
- *       - Authorization: []
- *     parameters:
- *       - in: query
- *         name: author
- *         schema:
- *           type: string
- *         description: Filter books by author
- *     responses:
- *       200:
- *         description: A list of books
+ *     description: Filter books by author
+*     responses:
+ *      200:
+ *         description: Ok, The field Was Added 
+ *      201:
+ *         description: Book borrowed successfully.
+ *      400:
+ *         description: Bad request, missing required fields.
+ *      401:
+ *         description:Unauthorized Error
+ *      403:
+ *         description: Forbidden Error
+ *      404:
+ *         description: Not Found Error
  */
 bookRoutes.get('/books', bookController.getAllBooks);
 
 /**
  * @swagger
  * /books/{id}:
- *   put:
+ *   patch:
  *     summary: Update a book
  *     tags: [Book Routes]
  *     description: Modify details of an existing book.
+ *     security:
+ *       - authorization: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - ISBN
+ *               - copies
+ *             properties:
+ *               ISBN:
+ *                 type: string
+ *                 default: "1234567891234"
+ *               copies:
+ *                 type: integer
+ *                 default: 0
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
  *         description: ID of the book to update.
- *     responses:
- *       200:
- *         description: Book updated successfully.
+*     responses:
+ *      200:
+ *         description: Ok, The field Was Added 
+ *      201:
+ *         description: Book borrowed successfully.
+ *      400:
+ *         description: Bad request, missing required fields.
+ *      401:
+ *         description:Unauthorized Error
+ *      403:
+ *         description: Forbidden Error
+ *      404:
+ *         description: Not Found Error
  */
-bookRoutes.put('/books/:id', authorisation, bookController.updateBooks);
+bookRoutes.patch('/books/:id', authorisation, bookController.updateBooks);
 
 /**
  * @swagger
@@ -104,8 +141,6 @@ bookRoutes.put('/books/:id', authorisation, bookController.updateBooks);
  *   get:
  *     summary: Get a book
  *     tags: [Book Routes]
- *     security:
- *       - Authorization: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -113,9 +148,19 @@ bookRoutes.put('/books/:id', authorisation, bookController.updateBooks);
  *         schema:
  *           type: integer
  *         description: ID of the book.
- *     responses:
- *       200:
- *         description: Book details retrieved.
+*     responses:
+ *      200:
+ *         description: Ok, The field Was Added 
+ *      201:
+ *         description: Book borrowed successfully.
+ *      400:
+ *         description: Bad request, missing required fields.
+ *      401:
+ *         description:Unauthorized Error
+ *      403:
+ *         description: Forbidden Error
+ *      404:
+ *         description: Not Found Error
  */
 bookRoutes.get('/books/:id', bookController.singleBook);
 
@@ -126,14 +171,26 @@ bookRoutes.get('/books/:id', bookController.singleBook);
  *     summary: Delete a book
  *     tags: [Book Routes]
  *     description: Remove a book from the library.
+ *     security:
+ *       - authorization: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
  *         description: ID of the book.
- *     responses:
- *       200:
- *         description: Book deleted successfully.
+*     responses:
+ *      200:
+ *         description: Ok, The field Was Added 
+ *      201:
+ *         description: Book borrowed successfully.
+ *      400:
+ *         description: Bad request, missing required fields.
+ *      401:
+ *         description:Unauthorized Error
+ *      403:
+ *         description: Forbidden Error
+ *      404:
+ *         description: Not Found Error
  */
 bookRoutes.delete('/books/:id', authorisation, bookController.deleteBooks);
 

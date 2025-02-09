@@ -27,14 +27,14 @@ const personRoutes = Router();
  *     summary: Get all persons
  *     tags: [Persons]
  *     security:
- *       - Authorization: []
+ *       - authorization: []
  *     responses:
  *       200:
  *         description: List of persons.
  *       500:
  *         description: Internal server error.
  */
-personRoutes.get('/persons', personController.getPerson);
+personRoutes.get('/persons',[authorisation],personController.getPerson);
 
 /**
  * @swagger
@@ -42,6 +42,8 @@ personRoutes.get('/persons', personController.getPerson);
  *   post:
  *     summary: Create a new user
  *     tags: [Persons]
+ *     security:
+ *       - authorization: []
  *     description: Register a new user in the system.
  *     requestBody:
  *       required: true
@@ -55,7 +57,7 @@ personRoutes.get('/persons', personController.getPerson);
  *               - phone
  *               - address
  *               - roles
- *               - email
+ *               - reqEmail
  *             properties:
  *               fname:
  *                 type: string
@@ -72,7 +74,7 @@ personRoutes.get('/persons', personController.getPerson);
  *               roles:
  *                 type: string
  *                 description: Role of the user.
- *               email:
+ *               reqEmail:
  *                 type: string
  *                 format: email
  *                 description: Email of the user.
@@ -84,32 +86,118 @@ personRoutes.get('/persons', personController.getPerson);
  *       500:
  *         description: Internal Server Error.
  */
-personRoutes.post('/users', personController.createPerson);
+personRoutes.post('/users',[authorisation],personController.createPerson);
 
 /**
  * @swagger
  * /login:
  *   post:
  *     summary: User login
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 description: Email of the user.
+ *               password:
+ *                 type: string
+ *                 description: Password of the user.
  *     tags: [Persons]
  *     description: Authenticate a user and return a token.
  *     responses:
- *       200:
- *         description: Login successful.
+ *      200:
+ *         description: Ok, The field Was Added 
+ *      201:
+ *         description: Book borrowed successfully.
+ *      400:
+ *         description: Bad request, missing required fields.
+ *      401:
+ *         description:Unauthorized Error
+ *      403:
+ *         description: Forbidden Error
+ *      404:
+ *         description: Not Found Error
  */
 personRoutes.post('/login', personController.loginPerson);
 
 /**
  * @swagger
  * /password:
- *   put:
+ *   patch:
  *     summary: Update password
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - oldPassword
+ *               - newPassword
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 description: oldPassword of the user.
+ *               password:
+ *                 type: string
+ *                 description: newPassword of the user.
  *     tags: [Persons]
+ *     security:
+ *       - authorization: []
  *     description: Change the password of an authenticated user.
- *     responses:
- *       200:
- *         description: Password updated successfully.
+*     responses:
+ *      200:
+ *         description: Ok, The field Was Added 
+ *      201:
+ *         description: Book borrowed successfully.
+ *      400:
+ *         description: Bad request, missing required fields.
+ *      401:
+ *         description:Unauthorized Error
+ *      403:
+ *         description: Forbidden Error
+ *      404:
+ *         description: Not Found Error
  */
-personRoutes.put('/password', authorisation, personController.updatePassword);
+personRoutes.patch('/password', authorisation, personController.updatePassword);
+
+/**
+ * @swagger
+ * /users/{id}:
+ *   delete:
+ *     summary: Delete User
+ *     tags: [Persons]
+ *     security:
+ *       - authorization: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID of the User.
+ *     description: Delete the user.
+ *     responses:
+ *      200:
+ *         description: Ok, The field Was Added 
+ *      201:
+ *         description: Book borrowed successfully.
+ *      400:
+ *         description: Bad request, missing required fields.
+ *      401:
+ *         description:Unauthorized Error
+ *      403:
+ *         description: Forbidden Error
+ *      404:
+ *         description: Not Found Error
+ */
+personRoutes.delete('/users/:id',authorisation,personController.deletePerson)
 
 export default personRoutes;

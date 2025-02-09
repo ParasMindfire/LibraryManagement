@@ -33,6 +33,10 @@ const Person = sequelize.define('Person', {
         // unique: true,
         defaultValue: 'N/A',
     },
+    library_name: {
+        type: DataTypes.STRING(255),
+        defaultValue: 'N/A',
+    }
 }, {
     tableName: 'person',
     timestamps: false

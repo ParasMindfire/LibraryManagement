@@ -1,79 +1,97 @@
 import sequelize from "../db/index.js";
-export const getAllBooks = async (req, res) => {
-    const [books] = await sequelize.query("SELECT * from books");
-    return res.status(200).json({ books: books });
-};
-export const createBooks = async (req, res) => {
+import { NotFoundError } from "../errors/notFound.js";
+import { InternalServerError } from "../errors/internalServerError.js";
+import { BadRequestError } from "../errors/badRequest.js";
+import { ForbiddenError } from "../errors/forbiddenError.js";
+import { StatusCodes } from "http-status-codes";
+export const getAllBooks = async (req, res, next) => {
     try {
+        const [books] = await sequelize.query("SELECT * FROM books");
+        if (!books || books.length === 0) {
+            throw new NotFoundError("No books found");
+        }
+        res.status(200).json({ books });
+    }
+    catch (error) {
+        next(new InternalServerError("Failed to fetch books"));
+    }
+};
+export const createBooks = async (req, res, next) => {
+    try {
+        const { email } = req.body.auth;
+        if (!email) {
+            throw new BadRequestError("Authentication email is required");
+        }
+        const [validPerson] = await sequelize.query("SELECT roles FROM person WHERE person_email = ?", { replacements: [email] });
+        if (!validPerson || validPerson.length === 0 || (validPerson[0].roles !== "librarian" && validPerson[0].roles !== "admin")) {
+            throw new ForbiddenError("Not allowed to Add books");
+        }
         const { title, author, genre, ISBN, total_copies } = req.body;
         if (!title || !author || !genre || !ISBN || !total_copies) {
-            return res.status(400).json({ message: 'All Books fields are required' });
+            throw new BadRequestError("All book fields are required");
         }
-        const [bookResult] = await sequelize.query("INSERT INTO books (title, author, genre, isbn, total_copies) VALUES (?, ?, ?, ?, ?) ", { replacements: [title, author, genre, ISBN, total_copies] });
+        const [bookResult] = await sequelize.query("INSERT INTO books (title, author, genre, isbn, total_copies) VALUES (?, ?, ?, ?, ?)", { replacements: [title, author, genre, ISBN, total_copies] });
         if (!bookResult || bookResult.length === 0) {
-            return res.status(500).json({ error: "Error creating books" });
+            throw new InternalServerError("Error creating book");
         }
-        res.status(201).json({ message: 'Books entered successfully', bookResult: bookResult });
+        res.status(201).json({ message: "Book created successfully", bookResult });
     }
     catch (error) {
-        console.error(error);
-        return res.status(500).json({ error: 'Internal Server Error' });
+        next(error);
     }
 };
-export const updateBooks = async (req, res) => {
+export const updateBooks = async (req, res, next) => {
     try {
         const { email } = req.body.auth;
-        const [validPerson] = await sequelize.query("select roles from person where person_email=?", { replacements: [email] });
-        console.log("valid person ", validPerson);
-        if (!validPerson || validPerson.length === 0 || validPerson[0].roles != "librarian") {
-            return res.status(500).json({ error: "Not Allowed To Update Books" });
+        const { copies, ISBN } = req.body;
+        if (!email) {
+            throw new BadRequestError("Authentication email is required");
         }
-        const { copies, isbn } = req.body;
-        if (!copies) {
-            return res.status(400).json({ message: 'Update Books Field is Missing' });
+        const [validPerson] = await sequelize.query("SELECT roles FROM person WHERE person_email = ?", { replacements: [email] });
+        if (!validPerson || validPerson.length === 0 || (validPerson[0].roles !== "librarian" && validPerson[0].roles !== "admin")) {
+            throw new ForbiddenError("Not allowed to Add books");
         }
-        const [updatedBook] = await sequelize.query("UPDATE books SET total_copies=? where isbn=?", { replacements: [copies, isbn] });
+        if (!copies || !ISBN) {
+            throw new BadRequestError("Copies and ISBN fields are required");
+        }
+        const [updatedBook] = await sequelize.query("UPDATE books SET total_copies = ? WHERE isbn = ?", { replacements: [copies, ISBN] });
         if (!updatedBook || updatedBook.length === 0) {
-            return res.status(500).json({ error: "Error updating books" });
+            throw new InternalServerError("Error updating book");
         }
-        res.status(201).json({ message: 'Books updated successfully', updatedBook: updatedBook });
+        res.status(200).json({ message: "Book updated successfully", updatedBook });
     }
     catch (error) {
-        console.error(error);
-        return res.status(500).json({ error: 'Internal Server Error' });
+        next(error);
     }
 };
-export const singleBook = async (req, res) => {
+export const singleBook = async (req, res, next) => {
     try {
         const id = req.params.id;
-        const [singleBook] = await sequelize.query("Select * from books where book_id=?", { replacements: [id] });
+        const [singleBook] = await sequelize.query("SELECT * FROM books WHERE book_id = ?", { replacements: [id] });
         if (!singleBook || singleBook.length === 0) {
-            return res.status(500).json({ error: "Error Getting book of give id" });
+            throw new NotFoundError("Book not found with the given ID");
         }
-        return res.status(201).json({ message: "Book Got Succesfully", singleBook: singleBook });
+        res.status(StatusCodes.OK).json({ message: "Book retrieved successfully", singleBook });
     }
     catch (error) {
-        console.error(error);
-        return res.status(500).json({ error: 'Internal Server Error' });
+        next(error);
     }
 };
-export const deleteBooks = async (req, res) => {
+export const deleteBooks = async (req, res, next) => {
     try {
         const { email } = req.body.auth;
-        const [validPerson] = await sequelize.query("select roles from person where person_email=?", { replacements: [email] });
-        if (!validPerson || validPerson.length === 0 || validPerson[0].roles != "librarian") {
-            return res.status(500).json({ error: "Not Allowed To Delete Books" });
+        const [validPerson] = await sequelize.query("SELECT roles FROM person WHERE person_email = ?", { replacements: [email] });
+        if (!validPerson || validPerson.length === 0 || (validPerson[0].roles !== "librarian" && validPerson[0].roles !== "admin")) {
+            throw new ForbiddenError("Not allowed to Add books");
         }
         const id = req.params.id;
-        console.log("book id ", id);
-        const [deletedBooks] = await sequelize.query("DELETE from books where book_id=?", { replacements: [id] });
+        const [deletedBooks] = await sequelize.query("DELETE FROM books WHERE book_id = ?", { replacements: [id] });
         if (!deletedBooks || deletedBooks.length === 0) {
-            return res.status(500).json({ error: "Error Deleting book" });
+            throw new NotFoundError("Error Deleting Book: Book not found");
         }
-        return res.status(201).json({ message: "Book Deleted Succesfully", deletedBooks: deletedBooks });
+        res.status(StatusCodes.OK).json({ message: "Book Deleted Successfully", deletedBooks });
     }
     catch (error) {
-        console.error(error);
-        return res.status(500).json({ error: 'Internal Server Error' });
+        next(error);
     }
 };

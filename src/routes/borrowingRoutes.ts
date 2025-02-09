@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { borrowingController } from "../controllers/index.js";
+import { authorisation } from "../middlewares/auth.js";
 
 const borrowingRoutes = Router();
 
@@ -17,7 +18,7 @@ const borrowingRoutes = Router();
  *     summary: Borrow a book
  *     tags: [Borrowing Routes]
  *     security:
- *       - Authorization: []
+ *       - authorization: []
  *     requestBody:
  *       required: true
  *       content:
@@ -44,12 +45,20 @@ const borrowingRoutes = Router();
  *                 type: string
  *                 format: date
  *     responses:
- *       201:
+ *      200:
+ *         description: Ok, The field Was Added 
+ *      201:
  *         description: Book borrowed successfully.
- *       400:
+ *      400:
  *         description: Bad request, missing required fields.
+ *      401:
+ *         description:Unauthorized Error
+ *      403:
+ *         description: Forbidden Error
+ *      404:
+ *         description: Not Found Error
  */
-borrowingRoutes.post('/borrowings', borrowingController.assignBooks);
+borrowingRoutes.post('/borrowings',[authorisation],borrowingController.assignBooks);
 
 /**
  * @swagger
@@ -58,30 +67,22 @@ borrowingRoutes.post('/borrowings', borrowingController.assignBooks);
  *     summary: Get all borrowings
  *     tags: [Borrowing Routes]
  *     security:
- *       - Authorization: []
- *     parameters:
- *       - in: query
- *         name: reader_id
- *         schema:
- *           type: integer
- *         description: Filter borrowings by reader ID.
- *       - in: query
- *         name: librarian_id
- *         schema:
- *           type: integer
- *         description: Filter borrowings by librarian ID.
- *       - in: query
- *         name: book_id
- *         schema:
- *           type: integer
- *         description: Filter borrowings by book ID.
- *     responses:
- *       200:
- *         description: List of borrowed books.
- *       500:
- *         description: Internal server error.
+ *       - authorization: []
+*     responses:
+ *      200:
+ *         description: Ok, The field Was Added 
+ *      201:
+ *         description: Book borrowed successfully.
+ *      400:
+ *         description: Bad request, missing required fields.
+ *      401:
+ *         description:Unauthorized Error
+ *      403:
+ *         description: Forbidden Error
+ *      404:
+ *         description: Not Found Error
  */
-borrowingRoutes.get('/borrowings', borrowingController.getAllBorrowings);
+borrowingRoutes.get('/borrowings',[authorisation], borrowingController.getAllBorrowings);
 
 /**
  * @swagger
@@ -90,19 +91,21 @@ borrowingRoutes.get('/borrowings', borrowingController.getAllBorrowings);
  *     summary: Get defaulters
  *     tags: [Borrowing Routes]
  *     security:
- *       - Authorization: []
- *     parameters:
- *       - in: query
- *         name: overdue_days
- *         schema:
- *           type: integer
- *         description: Filter defaulters by overdue days.
- *     responses:
- *       200:
- *         description: List of defaulters.
- *       500:
- *         description: Internal server error.
+ *       - authorization: []
+*     responses:
+ *      200:
+ *         description: Ok, The field Was Added 
+ *      201:
+ *         description: Book borrowed successfully.
+ *      400:
+ *         description: Bad request, missing required fields.
+ *      401:
+ *         description:Unauthorized Error
+ *      403:
+ *         description: Forbidden Error
+ *      404:
+ *         description: Not Found Error
  */
-borrowingRoutes.get('/defaulters', borrowingController.checkDefaulters);
+borrowingRoutes.get('/defaulters',[authorisation], borrowingController.checkDefaulters);
 
 export default borrowingRoutes;

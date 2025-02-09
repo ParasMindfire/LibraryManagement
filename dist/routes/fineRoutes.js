@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { borrowingController } from "../controllers/index.js";
+import { authorisation } from "../middlewares/auth.js";
 const fineRoutes = Router();
 /**
  * @swagger
@@ -14,56 +15,44 @@ const fineRoutes = Router();
  *     summary: Get all fines
  *     tags: [Fine Routes]
  *     security:
- *       - Authorization: []
- *     parameters:
- *       - in: query
- *         name: reader_id
- *         schema:
- *           type: integer
- *         description: Filter fines by reader ID.
- *       - in: query
- *         name: status
- *         schema:
- *           type: string
- *           enum: [pending, paid]
- *         description: Filter fines by status.
+ *       - authorization: []
  *     responses:
- *       200:
- *         description: List of fines.
- *       500:
- *         description: Internal server error.
+ *      200:
+ *         description: Ok, The field Was Added
+ *      201:
+ *         description: Book borrowed successfully.
+ *      400:
+ *         description: Bad request, missing required fields.
+ *      401:
+ *         description:Unauthorized Error
+ *      403:
+ *         description: Forbidden Error
+ *      404:
+ *         description: Not Found Error
  */
-fineRoutes.get('/fines', borrowingController.getAllfines);
+fineRoutes.get('/fines', [authorisation], borrowingController.getAllFines);
 /**
  * @swagger
  * /fines:
- *   put:
+ *   patch:
  *     summary: Update fine amount
  *     tags: [Fine Routes]
  *     security:
- *       - Authorization: []
+ *       - authorization: []
  *     description: Modify or update fine details.
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - fine_id
- *               - amount
- *             properties:
- *               fine_id:
- *                 type: integer
- *               amount:
- *                 type: integer
- *     responses:
- *       200:
- *         description: Fine updated successfully.
- *       400:
+*     responses:
+ *      200:
+ *         description: Ok, The field Was Added
+ *      201:
+ *         description: Book borrowed successfully.
+ *      400:
  *         description: Bad request, missing required fields.
- *       500:
- *         description: Internal server error.
+ *      401:
+ *         description:Unauthorized Error
+ *      403:
+ *         description: Forbidden Error
+ *      404:
+ *         description: Not Found Error
  */
-fineRoutes.put('/fines', borrowingController.updateFines);
+fineRoutes.patch('/fines', [authorisation], borrowingController.updateFines);
 export default fineRoutes;
