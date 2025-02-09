@@ -24,10 +24,18 @@ const personRoutes = Router();
  *     security:
  *       - authorization: []
  *     responses:
- *       200:
- *         description: List of persons.
- *       500:
- *         description: Internal server error.
+ *      200:
+ *         description: Ok, The field Was Added
+ *      201:
+ *         description: Book borrowed successfully.
+ *      400:
+ *         description: Bad request, missing required fields.
+ *      401:
+ *         description:Unauthorized Error
+ *      403:
+ *         description: Forbidden Error
+ *      404:
+ *         description: Not Found Error
  */
 personRoutes.get('/persons', [authorisation], personController.getPerson);
 /**
@@ -73,12 +81,18 @@ personRoutes.get('/persons', [authorisation], personController.getPerson);
  *                 format: email
  *                 description: Email of the user.
  *     responses:
- *       201:
- *         description: User created successfully.
- *       400:
- *         description: Missing required fields.
- *       500:
- *         description: Internal Server Error.
+ *      200:
+ *         description: Ok, The field Was Added
+ *      201:
+ *         description: Book borrowed successfully.
+ *      400:
+ *         description: Bad request, missing required fields.
+ *      401:
+ *         description:Unauthorized Error
+ *      403:
+ *         description: Forbidden Error
+ *      404:
+ *         description: Not Found Error
  */
 personRoutes.post('/users', [authorisation], personController.createPerson);
 /**

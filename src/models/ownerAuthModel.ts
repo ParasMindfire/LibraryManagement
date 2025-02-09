@@ -1,35 +1,29 @@
 import { DataTypes } from 'sequelize';
-import sequelize from '../db/index.js'
-import LibraryTable from './libraryModel.js';
+import sequelize from '../db/index.js';
 
-const OwnerAuth = sequelize.define('OwnerAuth', {
-  owner_auth_id: {
+const OwnerTable = sequelize.define('OwnerTable', {
+  owner_id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
     primaryKey: true,
   },
-  owner_id: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    // unique: true,
-    references: {
-      model: LibraryTable,
-      key: 'owner_id',
-    },
-    onDelete: 'CASCADE',
-  },
-  owner_pass_hash: {
+  owner_name: {
     type: DataTypes.STRING(255),
     allowNull: false,
   },
   owner_email: {
     type: DataTypes.STRING(255),
     allowNull: false,
-    // unique: true,
+    unique: true,
+  },
+  owner_pass_hash: {
+    type: DataTypes.STRING(255),
+    allowNull: false,
   },
 }, {
-  tableName: 'owner_auth',
-  timestamps: false
+  tableName: 'owner_table',
+  timestamps: false,
 });
 
-export default OwnerAuth;
+
+export default OwnerTable;

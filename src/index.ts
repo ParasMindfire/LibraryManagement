@@ -25,10 +25,6 @@ app.use(notFound);
 app.use(errorHandler as express.ErrorRequestHandler);
 
 
-
-
-
-
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
 });

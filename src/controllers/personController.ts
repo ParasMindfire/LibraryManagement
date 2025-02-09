@@ -83,7 +83,6 @@ export const createPerson = async (req: Request, res: Response, next: NextFuncti
         throw new InternalServerError('Error creating person');
       }
 
-
       console.log("person Result",personResult);
   
       await sequelize.query(

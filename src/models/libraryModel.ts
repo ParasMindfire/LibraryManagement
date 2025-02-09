@@ -1,8 +1,9 @@
 import { DataTypes } from 'sequelize';
-import sequelize from '../db/index.js'
+import sequelize from '../db/index.js';
+import OwnerTable from './ownerAuthModel.js';
 
 const LibraryTable = sequelize.define('LibraryTable', {
-  library_ID: {
+  library_id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
     primaryKey: true,
@@ -14,7 +15,11 @@ const LibraryTable = sequelize.define('LibraryTable', {
   owner_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    // unique: true,
+    references: {
+      model: OwnerTable,
+      key: 'owner_id',
+    },
+    onDelete: 'CASCADE',
   },
 }, {
   tableName: 'library_table',
@@ -23,18 +28,3 @@ const LibraryTable = sequelize.define('LibraryTable', {
 
 
 export default LibraryTable;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

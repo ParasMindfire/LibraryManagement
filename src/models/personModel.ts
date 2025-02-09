@@ -1,7 +1,5 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../db/index.js';
-import Authorisation from './authorisationModel.js';
-import { toDefaultValue } from 'sequelize/lib/utils';
 
 const Person = sequelize.define('Person', {
   person_id: {
@@ -27,7 +25,7 @@ const Person = sequelize.define('Person', {
     allowNull: false,
   },
   roles: {
-    type: DataTypes.ENUM('admin', 'librarian', 'reader'),
+    type: DataTypes.ENUM('owner','admin', 'librarian', 'reader'),
     allowNull: false,
     defaultValue: 'reader',
   },
