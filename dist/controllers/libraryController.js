@@ -15,7 +15,7 @@ export const getLibraries = async (req, res, next) => {
 };
 export const getAllOwners = async (req, res, next) => {
     try {
-        const [owners] = await sequelize.query("SELECT * FROM owner_auth");
+        const [owners] = await sequelize.query("SELECT * FROM owner_table");
         if (!owners || owners.length === 0) {
             throw new NotFoundError("No owners found");
         }

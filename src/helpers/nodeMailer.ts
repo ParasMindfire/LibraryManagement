@@ -76,7 +76,7 @@ export const sendEmail = async ( library_name:string,fname:string,lname:string,e
       </head>
       <body>
         <div class="container">
-          <h1>📜 Offer Letter - Welcome to ${library_name} 📜</h1>
+          <h1>📜 Membership Letter - Welcome to ${library_name} 📜</h1>
           <p>Dear <strong>${fname} ${lname}</strong>,</p>
 
           <p>We are pleased to offer you the position of <span class="role">${role}</span> at <strong>${library_name}</strong>. Congratulations on your selection! 🎉</p>

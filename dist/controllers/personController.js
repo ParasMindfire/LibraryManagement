@@ -9,6 +9,7 @@ import { NotFoundError } from '../errors/notFound.js';
 import { UnauthenticatedError } from '../errors/unauthenticated.js';
 import { ForbiddenError } from '../errors/forbiddenError.js';
 import { sendEmail } from '../helpers/nodeMailer.js';
+import { ConflictError } from '../errors/conflictError.js';
 dotenv.config();
 export const getPerson = async (req, res, next) => {
     try {
@@ -17,7 +18,7 @@ export const getPerson = async (req, res, next) => {
             throw new BadRequestError("Authentication email is required");
         }
         const [validPerson] = await sequelize.query("SELECT roles FROM person WHERE person_email = ?", { replacements: [email] });
-        if (!validPerson || validPerson.length === 0 || (validPerson[0].roles !== "librarian" && validPerson[0].roles !== "owner" && validPerson[0].roles !== "admin")) {
+        if (!validPerson || validPerson.length === 0 || (validPerson[0].roles !== "owner" && validPerson[0].roles !== "admin")) {
             throw new ForbiddenError("Not allowed to See Borrowings");
         }
         const [getAllPerson] = await sequelize.query("SELECT * FROM person");
@@ -33,30 +34,39 @@ export const getPerson = async (req, res, next) => {
 export const createPerson = async (req, res, next) => {
     try {
         const { email } = req.body.auth;
-        // console.log("emial aya ",email);
         if (!email) {
             throw new BadRequestError("Authentication email is required");
         }
-        const [validPerson] = await sequelize.query("SELECT * FROM person WHERE person_email = ?", { replacements: [email] });
-        if (!validPerson || validPerson.length === 0 || (validPerson[0].roles !== "owner" && validPerson[0].roles !== "admin")) {
-            throw new ForbiddenError("Not allowed to Create person Entries");
+        const [validPerson] = await sequelize.query("SELECT roles FROM person WHERE person_email = ?", { replacements: [email] });
+        if (!validPerson || validPerson.length === 0) {
+            throw new ForbiddenError("Invalid user, access denied");
         }
+        const userRole = validPerson[0].roles;
         const { fname, lname, phone, address, roles, reqEmail, library_name } = req.body;
-        if (!fname || !lname || !phone || !address || !roles || !email || !library_name) {
+        if (!fname || !lname || !phone || !address || !roles || !reqEmail || !library_name) {
             throw new BadRequestError('All fields are required');
         }
-        const person_email = reqEmail;
+        const allowedRoles = {
+            owner: ["admin", "librarian", "reader"],
+            admin: ["librarian", "reader"],
+        };
+        if (!allowedRoles[userRole]?.includes(roles)) {
+            throw new ForbiddenError("You do not have permission to create this role");
+        }
+        const [existingPerson] = await sequelize.query("SELECT person_email FROM person WHERE person_email = ?", { replacements: [reqEmail] });
+        if (existingPerson && existingPerson.length > 0) {
+            throw new ConflictError("Email already registered");
+        }
         const defaultPassword = `${fname.toLowerCase()}_${library_name}`;
         const salt = bcrypt.genSaltSync(10);
         const hashedPassword = bcrypt.hashSync(defaultPassword, salt);
-        const [personResult] = await sequelize.query("INSERT INTO person (fname, lname, phone, address, roles, person_email,library_name) VALUES (?, ?, ?, ?, ?, ?,?) ", { replacements: [fname, lname, phone, address, roles, person_email, library_name] });
-        if (!personResult || personResult.length === 0) {
+        const [personResult] = await sequelize.query("INSERT INTO person (fname, lname, phone, address, roles, person_email, library_name) VALUES (?, ?, ?, ?, ?, ?, ?)", { replacements: [fname, lname, phone, address, roles, reqEmail, library_name] });
+        if (!personResult) {
             throw new InternalServerError('Error creating person');
         }
-        console.log("person Result", personResult);
-        await sequelize.query("INSERT INTO authorisation (person_email, person_pass_hash) VALUES (?, ?)", { replacements: [person_email, hashedPassword] });
-        sendEmail(library_name, fname, lname, person_email, roles, defaultPassword);
-        res.status(StatusCodes.CREATED).json({ message: 'Person created successfully', personResult });
+        await sequelize.query("INSERT INTO authorisation (person_email, person_pass_hash) VALUES (?, ?)", { replacements: [reqEmail, hashedPassword] });
+        sendEmail(library_name, fname, lname, reqEmail, roles, defaultPassword);
+        res.status(StatusCodes.CREATED).json({ message: 'Person created successfully' });
     }
     catch (error) {
         next(error);
@@ -115,9 +125,14 @@ export const deletePerson = async (req, res, next) => {
         if (!validPerson || validPerson.length === 0 || (validPerson[0].roles !== "owner" && validPerson[0].roles !== "admin")) {
             throw new ForbiddenError("Not Allowed to Delete a Person");
         }
+        const userRole = validPerson[0].roles;
         const [existingPerson] = await sequelize.query("SELECT * FROM person WHERE person_id = ?", { replacements: [personId] });
         if (!existingPerson || existingPerson.length === 0) {
             throw new NotFoundError("Person Not Found");
+        }
+        const targetRole = existingPerson[0].roles;
+        if (userRole === "admin" && targetRole !== "librarian") {
+            throw new ForbiddenError("Admins can only delete librarians");
         }
         const [deletedPerson] = await sequelize.query("DELETE FROM person WHERE person_id = ?", { replacements: [personId] });
         if (!deletedPerson || deletedPerson.length === 0) {
@@ -125,6 +140,38 @@ export const deletePerson = async (req, res, next) => {
         }
         res.status(200).json({
             message: "Person Deleted Successfully",
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+};
+export const updatePerson = async (req, res, next) => {
+    try {
+        const { email } = req.body.auth;
+        const personId = req.params.id;
+        const { newRole } = req.body;
+        if (!email) {
+            throw new BadRequestError("Authentication email is required");
+        }
+        if (!newRole) {
+            throw new BadRequestError("New role is required");
+        }
+        const [validPerson] = await sequelize.query("SELECT roles FROM person WHERE person_email = ?", { replacements: [email] });
+        if (!validPerson || validPerson.length === 0) {
+            throw new NotFoundError("Authenticated user not found");
+        }
+        const userRole = validPerson[0].roles;
+        if (userRole !== "owner") {
+            throw new ForbiddenError("Only the owner can update a person's role");
+        }
+        const [existingPerson] = await sequelize.query("SELECT roles FROM person WHERE person_id = ?", { replacements: [personId] });
+        if (!existingPerson || existingPerson.length === 0) {
+            throw new NotFoundError("Person not found");
+        }
+        await sequelize.query("UPDATE person SET roles = ? WHERE person_id = ?", { replacements: [newRole, personId] });
+        res.status(StatusCodes.OK).json({
+            message: `Person role updated successfully to ${newRole}`,
         });
     }
     catch (error) {

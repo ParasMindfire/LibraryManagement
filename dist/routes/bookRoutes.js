@@ -3,20 +3,24 @@ import { bookController } from "../controllers/index.js";
 import { authorisation } from "../middlewares/auth.js";
 const bookRoutes = Router();
 /**
- * @swagger
- * tags:
- *   name: Book Routes
- *   description: API related to libraries
- */
-/**
- * @swagger
+* @swagger
+* components:
+*   securitySchemes:
+*     bearerAuth:
+*       type: http
+*       scheme: bearer
+*       bearerFormat: JWT
+*
+* security:
+*   - bearerAuth: []
+*
  * /books:
  *   post:
  *     summary: Add a new book
  *     tags: [Book Routes]
- *     description: Add a new book to the library.
  *     security:
- *       - authorization: []
+ *       - bearerAuth: []
+ *     description: Add a new book to the library.
  *     requestBody:
  *       required: true
  *       content:
@@ -45,7 +49,7 @@ const bookRoutes = Router();
  *               total_copies:
  *                 type: integer
  *                 default: 0
-*     responses:
+ *     responses:
  *      200:
  *         description: Ok, The field Was Added
  *      201:
@@ -53,7 +57,7 @@ const bookRoutes = Router();
  *      400:
  *         description: Bad request, missing required fields.
  *      401:
- *         description:Unauthorized Error
+ *         description: Unauthorized Error
  *      403:
  *         description: Forbidden Error
  *      404:
@@ -83,14 +87,27 @@ bookRoutes.post('/books', authorisation, bookController.createBooks);
  */
 bookRoutes.get('/books', bookController.getAllBooks);
 /**
- * @swagger
+* @swagger
+* components:
+*   securitySchemes:
+*     bearerAuth:
+*       type: http
+*       scheme: bearer
+*       bearerFormat: JWT
  * /books/{id}:
  *   patch:
  *     summary: Update a book
  *     tags: [Book Routes]
  *     description: Modify details of an existing book.
  *     security:
- *       - authorization: []
+ *       - bearerAuth: []
+ *     parameters:
+ *      - in: path
+ *        name: id
+ *        required: true
+ *        schema:
+ *          type: string
+ *        description: "ID of the book to update"
  *     requestBody:
  *       required: true
  *       content:
@@ -107,12 +124,7 @@ bookRoutes.get('/books', bookController.getAllBooks);
  *               copies:
  *                 type: integer
  *                 default: 0
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         description: ID of the book to update.
-*     responses:
+ *     responses:
  *      200:
  *         description: Ok, The field Was Added
  *      201:
@@ -120,7 +132,7 @@ bookRoutes.get('/books', bookController.getAllBooks);
  *      400:
  *         description: Bad request, missing required fields.
  *      401:
- *         description:Unauthorized Error
+ *         description: Unauthorized Error
  *      403:
  *         description: Forbidden Error
  *      404:
@@ -128,7 +140,15 @@ bookRoutes.get('/books', bookController.getAllBooks);
  */
 bookRoutes.patch('/books/:id', authorisation, bookController.updateBooks);
 /**
- * @swagger
+* @swagger
+* components:
+*   securitySchemes:
+*     bearerAuth:
+*       type: http,
+*       in: header,
+*       name: authorization,
+*       scheme: bearer,
+*       bearerFormat: JWT
  * /books/{id}:
  *   get:
  *     summary: Get a book
@@ -156,14 +176,20 @@ bookRoutes.patch('/books/:id', authorisation, bookController.updateBooks);
  */
 bookRoutes.get('/books/:id', bookController.singleBook);
 /**
- * @swagger
+* @swagger
+* components:
+*   securitySchemes:
+*     bearerAuth:
+*       type: http,
+*       in: header,
+*       name: authorization,
+*       scheme: bearer,
+*       bearerFormat: JWT
  * /books/{id}:
  *   delete:
  *     summary: Delete a book
  *     tags: [Book Routes]
  *     description: Remove a book from the library.
- *     security:
- *       - authorization: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -184,4 +210,47 @@ bookRoutes.get('/books/:id', bookController.singleBook);
  *         description: Not Found Error
  */
 bookRoutes.delete('/books/:id', authorisation, bookController.deleteBooks);
+/**
+ * @swagger
+ * /return:
+ *   post:
+ *     summary: Return a borrowed book
+ *     tags: [Book Routes]
+ *     description: Allows a librarian, owner, or admin to process the return of a borrowed book.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: "{token}"
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - borrowing_id
+ *             properties:
+ *               borrowing_id:
+ *                 type: integer
+ *                 description: The ID of the borrowing record.
+ *     responses:
+ *       200:
+ *         description: Book returned successfully, no fine applied OR fine has been resolved.
+ *       400:
+ *         description: Bad request, missing required fields OR Fine is pending, book cannot be returned until payment is made.
+ *       401:
+ *         description: Unauthorized Error
+ *       403:
+ *         description: Forbidden Error (Only librarians, owners, or admins can return books)
+ *       404:
+ *         description: Not Found Error (Borrowing record or fine not found)
+ *       500:
+ *         description: Internal Server Error
+ */
+bookRoutes.patch('/books', authorisation, bookController.returnBook);
 export default bookRoutes;

@@ -9,7 +9,6 @@ import Fine from "./fineModel.js";
 const syncTables=async()=>{
     await OwnerTable.sync({alter: true});
     console.log('OwnerAuth Table synced successfully.');
-
     
     await LibraryTable.sync({ alter: true });
     console.log('LibraryTable synced successfully.');

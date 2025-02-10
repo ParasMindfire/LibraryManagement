@@ -33,7 +33,7 @@ export const createBooks = async (req: Request, res: Response, next: NextFunctio
             { replacements: [email] }
         );
 
-        if (!validPerson || validPerson.length === 0 || (validPerson[0].roles !== "librarian" && validPerson[0].roles !== "admin")) {
+        if (!validPerson || validPerson.length === 0 || (validPerson[0].roles !== "owner" && validPerson[0].roles !== "librarian" && validPerson[0].roles !== "admin")) {
             throw new ForbiddenError("Not allowed to Add books");
         }
 
@@ -74,7 +74,7 @@ export const updateBooks = async (req: Request, res: Response, next: NextFunctio
             { replacements: [email] }
         );
 
-        if (!validPerson || validPerson.length === 0 || (validPerson[0].roles !== "librarian" && validPerson[0].roles !== "admin")) {
+        if (!validPerson || validPerson.length === 0 || (validPerson[0].roles !== "owner" && validPerson[0].roles !== "librarian" && validPerson[0].roles !== "admin")) {
             throw new ForbiddenError("Not allowed to Add books");
         }
 
@@ -129,7 +129,7 @@ export const deleteBooks = async (req: Request, res: Response, next: NextFunctio
             { replacements: [email] }
         );
 
-        if (!validPerson || validPerson.length === 0 || (validPerson[0].roles !== "librarian" && validPerson[0].roles !== "admin")) {
+        if (!validPerson || validPerson.length === 0 || (validPerson[0].roles !== "owner" && validPerson[0].roles !== "librarian" && validPerson[0].roles !== "admin")) {
             throw new ForbiddenError("Not allowed to Add books");
         }
 
@@ -150,3 +150,69 @@ export const deleteBooks = async (req: Request, res: Response, next: NextFunctio
         next(error);
     }
 };
+
+
+export const returnBook = async (req: Request, res: Response, next: NextFunction):Promise<any>=> {
+    try {
+      const { email } = req.body.auth;
+      const { borrowing_id } = req.body;
+  
+      if (!email || !borrowing_id) {
+        throw new BadRequestError("Authentication email and Borrowing ID are required");
+      }
+  
+      const [validPerson]: any = await sequelize.query(
+        "SELECT roles FROM person WHERE person_email = ?",
+        { replacements: [email] }
+      );
+  
+      if (!validPerson || validPerson.length === 0 || !["librarian", "owner", "admin"].includes(validPerson[0].roles)) {
+        throw new ForbiddenError("Not allowed to return books");
+      }
+  
+      const [borrowingRecord]: any = await sequelize.query(
+        "SELECT fine_id FROM borrowing WHERE borrowing_id = ?",
+        { replacements: [borrowing_id] }
+      );
+  
+      if (!borrowingRecord || borrowingRecord.length === 0) {
+        throw new NotFoundError("Borrowing record not found");
+      }
+  
+      const { fine_id } = borrowingRecord[0];
+  
+      if (fine_id === -1) {
+        await sequelize.query(
+          "UPDATE borrowing SET status = 'resolved' WHERE borrowing_id = ?",
+          { replacements: [borrowing_id] }
+        );
+        return res.status(200).json({ message: "Book returned successfully, no fine applied" });
+      }
+  
+      const [fineRecord]: any = await sequelize.query(
+        "SELECT status FROM fine WHERE fine_id = ?",
+        { replacements: [fine_id] }
+      );
+  
+      if (!fineRecord || fineRecord.length === 0) {
+        throw new InternalServerError("Fine record not found");
+      }
+  
+      const { status: fineStatus } = fineRecord[0];
+  
+      if (fineStatus === "pending") {
+        return res.status(400).json({ message: "Fine is pending, book cannot be returned until payment is made" });
+      }
+
+      await sequelize.query(
+        "UPDATE borrowing SET status = 'resolved' WHERE borrowing_id = ?",
+        { replacements: [borrowing_id] }
+      );
+  
+      return res.status(200).json({ message: "Book returned successfully, fine has been resolved" });
+  
+    } catch (error) {
+      next(error);
+    }
+  };
+  

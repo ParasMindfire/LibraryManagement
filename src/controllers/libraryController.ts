@@ -20,7 +20,7 @@ export const getLibraries = async (req: Request, res: Response, next: NextFuncti
 
 export const getAllOwners = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const [owners]: any[] = await sequelize.query("SELECT * FROM owner_auth");
+    const [owners]: any[] = await sequelize.query("SELECT * FROM owner_table");
 
     if (!owners || owners.length === 0) {
       throw new NotFoundError("No owners found");

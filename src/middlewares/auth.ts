@@ -10,16 +10,16 @@ export const authorisation = async (req:Request, res :Response, next:NextFunctio
   try {
     console.log("headers", req.headers);
 
-    const authHeader = req.headers.authorization;
+    const authHeader:any = req.headers.authorization;
 
-    // console.log("authHeader",authHeader);
+    console.log("authHeader",authHeader);
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
         throw new UnauthenticatedError("Token Not Found in Header");
     }
 
     const token = authHeader.split(" ")[1];
-    console.log("Token: ", token);
+    // console.log("Token: ", token);
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET as string);

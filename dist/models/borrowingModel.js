@@ -43,6 +43,11 @@ const Borrowing = sequelize.define('Borrowing', {
     fine_id: {
         type: DataTypes.INTEGER,
         defaultValue: -1,
+    },
+    status: {
+        type: DataTypes.STRING(20),
+        allowNull: false,
+        defaultValue: 'borrowed',
     }
 }, {
     tableName: 'borrowing',
