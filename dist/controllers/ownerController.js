@@ -1,6 +1,8 @@
 import sequelize from "../db/index.js";
 import bcrypt from "bcryptjs";
-import { BadRequestError, InternalServerError } from "../errors/index.js";
+import { BadRequestError, InternalServerError, NotFoundError } from "../errors/index.js";
+import { ConflictError } from "../errors/index.js";
+import { StatusCodes } from "http-status-codes";
 export const createOwner = async (req, res, next) => {
     try {
         const { owner_name, owner_email, library_name } = req.body;
@@ -19,10 +21,12 @@ export const createOwner = async (req, res, next) => {
         const owner_id = owner[0]?.owner_id;
         await sequelize.query(`INSERT INTO library_table (library_name, owner_id)
              VALUES (?, ?)`, { replacements: [library_name, owner_id] });
+        console.log("ownerID", owner_id);
         const [newPerson] = await sequelize.query(`INSERT INTO person (fname, lname, phone, address, roles, person_email, library_name)
              VALUES (?, ?, ?, ?, ?, ?, ?)`, {
-            replacements: [owner_name, "Owner", "N/A", "N/A", "owner", owner_email, library_name]
+            replacements: [owner_name, 'Owner', 'NA', 'NA', 'owner', owner_email, library_name]
         });
+        console.log("new PErson ", newPerson);
         if (!newPerson) {
             throw new InternalServerError("Failed to create owner entry in person table");
         }
@@ -34,6 +38,23 @@ export const createOwner = async (req, res, next) => {
             library: { library_name: `${library_name}` },
             person: { person_email: owner_email, roles: "owner" }
         });
+    }
+    catch (error) {
+        next(error);
+    }
+};
+export const deleteOwner = async (req, res, next) => {
+    try {
+        const { email } = req.body;
+        const [validPerson] = await sequelize.query("SELECT * FROM owner_table WHERE owner_email = ?", { replacements: [email] });
+        if (!validPerson || validPerson.length === 0) {
+            throw new ConflictError("Owner Not Found");
+        }
+        const [deleteOwner] = await sequelize.query("DELETE FROM owner_table WHERE owner_email = ?", { replacements: [email] });
+        if (!deleteOwner || deleteOwner.length === 0) {
+            throw new NotFoundError("Error Deleting Owner: Owner not found");
+        }
+        res.status(StatusCodes.OK).json({ message: "Owner Deleted Successfully", deleteOwner });
     }
     catch (error) {
         next(error);

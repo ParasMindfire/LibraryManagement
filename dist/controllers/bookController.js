@@ -4,13 +4,15 @@ import { InternalServerError } from "../errors/internalServerError.js";
 import { BadRequestError } from "../errors/badRequest.js";
 import { ForbiddenError } from "../errors/forbiddenError.js";
 import { StatusCodes } from "http-status-codes";
+import { ConflictError } from "../errors/conflictError.js";
 export const getAllBooks = async (req, res, next) => {
     try {
         const [books] = await sequelize.query("SELECT * FROM books");
         if (!books || books.length === 0) {
             throw new NotFoundError("No books found");
         }
-        res.status(200).json({ books });
+        console.log("books ", books);
+        return res.status(200).json({ books: books });
     }
     catch (error) {
         next(new InternalServerError("Failed to fetch books"));
@@ -29,6 +31,10 @@ export const createBooks = async (req, res, next) => {
         const { title, author, genre, ISBN, total_copies } = req.body;
         if (!title || !author || !genre || !ISBN || !total_copies) {
             throw new BadRequestError("All book fields are required");
+        }
+        const [existingBook] = await sequelize.query("SELECT * FROM books WHERE isbn = ?", { replacements: [ISBN] });
+        if (existingBook.length > 0) {
+            throw new ConflictError("A book with this ISBN already exists");
         }
         const [bookResult] = await sequelize.query("INSERT INTO books (title, author, genre, isbn, total_copies) VALUES (?, ?, ?, ?, ?)", { replacements: [title, author, genre, ISBN, total_copies] });
         if (!bookResult || bookResult.length === 0) {

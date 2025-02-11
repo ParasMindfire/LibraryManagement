@@ -5,8 +5,9 @@ import { InternalServerError } from "../errors/internalServerError.js";
 import { BadRequestError } from "../errors/badRequest.js";
 import { ForbiddenError } from "../errors/forbiddenError.js";
 import { StatusCodes } from "http-status-codes";
+import { ConflictError } from "../errors/conflictError.js";
 
-export const getAllBooks = async (req: Request, res: Response, next: NextFunction) => {
+export const getAllBooks = async (req: Request, res: Response, next: NextFunction):Promise<any> => {
     try {
         const [books]: any[] = await sequelize.query("SELECT * FROM books");
 
@@ -14,7 +15,9 @@ export const getAllBooks = async (req: Request, res: Response, next: NextFunctio
             throw new NotFoundError("No books found");
         }
 
-        res.status(200).json({ books });
+        console.log("books ",books);
+
+        return res.status(200).json({ books:books });
     } catch (error) {
         next(new InternalServerError("Failed to fetch books"));
     }
@@ -42,6 +45,15 @@ export const createBooks = async (req: Request, res: Response, next: NextFunctio
 
         if (!title || !author || !genre || !ISBN || !total_copies) {
             throw new BadRequestError("All book fields are required");
+        }
+
+        const [existingBook]: any[] = await sequelize.query(
+            "SELECT * FROM books WHERE isbn = ?",
+            { replacements: [ISBN] }
+        );
+
+        if (existingBook.length > 0) {
+            throw new ConflictError("A book with this ISBN already exists");
         }
 
         const [bookResult]: any[] = await sequelize.query(

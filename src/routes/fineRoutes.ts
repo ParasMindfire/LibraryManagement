@@ -6,33 +6,38 @@ const fineRoutes = Router();
 
 /**
  * @swagger
- * tags:
- *   name: Fine Routes
- *   description: API related to libraries
- */
-
+ * components:
+ *   securitySchemes:
+ *     BearerAuth:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
+ *
+ * security:
+ *   - BearerAuth: []
+ * 
 /**
  * @swagger
  * /fines:
  *   get:
- *     summary: Get all fines
- *     tags: [Fine Routes]
+ *     summary: Retrieve all fines
+ *     description: Fetch a list of all fines in the system.
+ *     tags: [Fines]
  *     security:
- *       - authorization: []
+ *       - BearerAuth: []
  *     responses:
- *      200:
- *         description: Ok, The field Was Added 
- *      201:
- *         description: Book borrowed successfully.
- *      400:
- *         description: Bad request, missing required fields.
- *      401:
- *         description:Unauthorized Error
- *      403:
- *         description: Forbidden Error
- *      404:
- *         description: Not Found Error
+ *       200:
+ *         description: OK - List of fines retrieved successfully.
+ *       400:
+ *         description: Bad request - Invalid query parameters.
+ *       401:
+ *         description: Unauthorized - Token is missing or invalid.
+ *       403:
+ *         description: Forbidden - User does not have permission to access this resource.
+ *       404:
+ *         description: Not Found - No fines available.
  */
+
 fineRoutes.get('/fines', [authorisation],borrowingController.getAllFines);
 
 /**
@@ -40,24 +45,44 @@ fineRoutes.get('/fines', [authorisation],borrowingController.getAllFines);
  * /fines:
  *   patch:
  *     summary: Update fine amount
- *     tags: [Fine Routes]
- *     security:
- *       - authorization: []
  *     description: Modify or update fine details.
-*     responses:
- *      200:
- *         description: Ok, The field Was Added 
- *      201:
- *         description: Book borrowed successfully.
- *      400:
- *         description: Bad request, missing required fields.
- *      401:
- *         description:Unauthorized Error
- *      403:
- *         description: Forbidden Error
- *      404:
- *         description: Not Found Error
+ *     tags: [Fines]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - fineId
+ *               - amount
+ *             properties:
+ *               fineId:
+ *                 type: integer
+ *                 description: The ID of the fine to update.
+ *                 example: 123
+ *               amount:
+ *                 type: number
+ *                 format: float
+ *                 description: The new fine amount.
+ *                 example: 50.5
+ *     responses:
+ *       200:
+ *         description: Fine amount updated successfully.
+ *       400:
+ *         description: Bad request - Missing required fields.
+ *       401:
+ *         description: Unauthorized - Token is missing or invalid.
+ *       403:
+ *         description: Forbidden - User does not have permission to update fines.
+ *       404:
+ *         description: Not found - Fine record does not exist.
+ *       500:
+ *         description: Internal Server Error.
  */
+
 fineRoutes.patch('/fines',[authorisation], borrowingController.updateFines);
 
 export default fineRoutes;

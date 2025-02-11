@@ -1,7 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 import sequelize from "../db/index.js";
 import bcrypt from "bcryptjs";
-import { BadRequestError, InternalServerError } from "../errors/index.js";
+import { BadRequestError, InternalServerError, NotFoundError } from "../errors/index.js";
+import { ConflictError } from "../errors/index.js";
+import { StatusCodes } from "http-status-codes";
 
 export const createOwner = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -42,13 +44,18 @@ export const createOwner = async (req: Request, res: Response, next: NextFunctio
             { replacements: [library_name, owner_id] }
         );
 
+        console.log("ownerID",owner_id);
+
+
         const [newPerson]: any = await sequelize.query(
             `INSERT INTO person (fname, lname, phone, address, roles, person_email, library_name)
              VALUES (?, ?, ?, ?, ?, ?, ?)`,
             {
-                replacements: [owner_name, "Owner", "N/A", "N/A", "owner", owner_email, library_name]
+                replacements: [owner_name, 'Owner', 'NA', 'NA', 'owner', owner_email, library_name]
             }
         );
+
+        console.log("new PErson ",newPerson);
 
         if (!newPerson) {
             throw new InternalServerError("Failed to create owner entry in person table");
@@ -71,3 +78,36 @@ export const createOwner = async (req: Request, res: Response, next: NextFunctio
         next(error);
     }
 };
+
+
+export const deleteOwner = async (req: Request, res: Response, next: NextFunction)=> {
+    try {
+        const { email } = req.body;
+
+        const [validPerson]: any = await sequelize.query(
+            "SELECT * FROM owner_table WHERE owner_email = ?", 
+            { replacements: [email] }
+        );
+
+        if (!validPerson || validPerson.length === 0 ) {
+            throw new ConflictError("Owner Not Found");
+        }
+
+        const [deleteOwner]: any[] = await sequelize.query(
+            "DELETE FROM owner_table WHERE owner_email = ?", 
+            { replacements: [email] }
+        );
+
+        if (!deleteOwner || deleteOwner.length === 0) {
+            throw new NotFoundError("Error Deleting Owner: Owner not found");
+        }
+
+        res.status(StatusCodes.OK).json({ message: "Owner Deleted Successfully", deleteOwner });
+
+    } catch (error) {
+        next(error);
+    }
+};
+
+
+
